@@ -1,14 +1,20 @@
-using Visualizers;
+using Visualizer.Visualizers;
 
-public static class VisualizerList
+namespace Visualizer
 {
-    public static readonly IVisualizerModule[] List = {
-        new SoundVisual(),
-        new WindVisualizer(),
-        new ModelVisualizer(),
-        new JoseVisualizer(),
-        new IonicVisualizer(),
-        new GridVisualizer(),
-        new VFXVisualizer()
-    };
+    public static class VisualizerList
+    {
+        public static readonly IVisualizerModule[] List =
+        {
+            new SoundVisual(),
+            new WindVisualizer(),
+            new ModelVisualizer(),
+            new JoseVisualizer(),
+            new IonicVisualizer(),
+            new GridVisualizer(),
+            new VFXVisualizer(),
+            new SpookyVisualizer(),
+            new FireVisualizer()
+        };
+    }
 }

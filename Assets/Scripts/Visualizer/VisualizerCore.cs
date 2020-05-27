@@ -1,142 +1,223 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
+using Lasp;
+using Unity.Collections;
+using UnityEngine;
 
-[RequireComponent(typeof(AudioSource))]
-public class VisualizerCore : MonoBehaviour {
-	
-	// Used to create the list
-	public VisualizerSelector VisualizerSelector;
+namespace Visualizer
+{
+    public class VisualizerCore : MonoBehaviour
+    {
+        // How many samples to split the sound data into.
+        public const int SampleSize = 2048;
 
-	public bool ModifyScale;
-	public float scale = 1f;
+        // Setters included below
+        private static bool _modifyScale;
+        private static float _scale;
 
-	// How many samples to split the sound data into.
-	private const int SAMPLE_SIZE = 1024;
+        // We need a lot of components
+        private static AudioLevelTracker _bypassTracker;
+        private static AudioLevelTracker _highpassTracker;
+        private static AudioLevelTracker _bandpassTracker;
+        private static AudioLevelTracker _lowpassTracker;
 
-	// These three values are set by the analysis of the sound
-	private float rmsValue;
-	private float dbValue;
-	private float pitchValue;
+        private static SpectrumAnalyzer _spectrumAnalyzer;
+        
+        // Save these so we don't grab too much
+        private static NativeSlice<float> _bypassSamples;
+        private static NativeSlice<float> _highpassSamples;
+        private static NativeSlice<float> _bandpassSamples;
+        private static NativeSlice<float> _lowpassSamples;
 
-	private AudioSource source;
-	private float[] samples;  // Passed into the audiosouce methods to get data.
-	private float[] spectrum; // Same.
-	private float sampleRate;
+        private static NativeArray<float> _spectrum;
 
-	private GameObject _scaledEmpty;                      // An empty for Monado scaling
-	private List<IVisualizerModule> _availableVisualizers; // Visualizers that can be used
-	private List<IVisualizerModule> _activeVisualizers;    // Visualizers in use, for UpdateVisuals()
+        private static GameObject _scaledEmpty; // An empty for Monado scaling
+        private List<IVisualizerModule> _activeVisualizers; // Visualizers in use, for UpdateVisuals()
+        private List<IVisualizerModule> _availableVisualizers; // Visualizers that can be used
 
-	private void Start ()
-	{
-		source = GetComponent<AudioSource>();
-		samples = new float[SAMPLE_SIZE];
-		spectrum = new float[SAMPLE_SIZE];
-		sampleRate = AudioSettings.outputSampleRate;
-		
-		// Make an object to scale inside the Monado
-		_scaledEmpty = new GameObject("ScaledEmpty");
-		_scaledEmpty.transform.parent = transform;
-		_scaledEmpty.AddComponent<Rotator>();
+        // Used to create the list
+        public VisualizerSelector VisualizerSelector;
 
-		// Build the list of visualizers to use
-		_availableVisualizers = new List<IVisualizerModule>(VisualizerList.List);
-		_activeVisualizers = new List<IVisualizerModule>();
-		
-		// Update the UI with the list
-		VisualizerSelector.Init(this, _availableVisualizers);
-		
-		ScaleToMonado();
-	}
+        private void Start()
+        {
+            SelectDevice(AudioSystem.InputDevices.First().ID, gameObject);
 
-	private void Update()
-	{
-		AnalyzeSound();
-		
-		if (ModifyScale) {
-			spectrum = spectrum.Select(i => i * scale).ToArray();
-			samples = samples.Select(i => i * scale).ToArray();
-		}
-		//Update visualizers
-		foreach (IVisualizerModule visualizer in _activeVisualizers)
-			visualizer.UpdateVisuals(SAMPLE_SIZE, spectrum, samples);
-	}
+            // Make an object to scale inside the Monado
+            _scaledEmpty = new GameObject("ScaledEmpty");
+            _scaledEmpty.transform.parent = transform;
+            _scaledEmpty.AddComponent<Rotator>();
+            ScaleToMonado();
 
-	// Analyze sound and assign pitch, db, and rms values.
-	private void AnalyzeSound()
-	{
-		source.GetOutputData(samples, 0);
+            // Build the list of visualizers to use
+            _availableVisualizers = new List<IVisualizerModule>(VisualizerList.List);
+            _activeVisualizers = new List<IVisualizerModule>();
 
-		// Get the RMS Value
-		float sum = 0;
-		for (int i = 0; i < SAMPLE_SIZE; i++)
-		{
-			sum += samples[i] * samples[i];
-		}
-		rmsValue = Mathf.Sqrt(sum / SAMPLE_SIZE);
+            // Update the UI with the list
+            VisualizerSelector.Init(this, _availableVisualizers);
+        }
 
-		// Get the DB Value
-		dbValue = 20 * Mathf.Log10(rmsValue / 0.1f);
+        private void Update()
+        {
+            _bypassSamples = _bypassTracker.audioDataSlice;
+            _highpassSamples = _highpassTracker.audioDataSlice;
+            _bandpassSamples = _bandpassTracker.audioDataSlice;
+            _lowpassSamples = _lowpassTracker.audioDataSlice;
 
-		// Get Sound Spectrum
-		source.GetSpectrumData(spectrum, 0, FFTWindow.BlackmanHarris);
+            _spectrum = _spectrumAnalyzer.spectrumArray;
+            
+            VisualizerBeatDetector.Update();
 
-		// Find Pitch Value
-		float maxV = 0;
-		int maxN = 0;
-		for (int i = 0; i < SAMPLE_SIZE; i++)
-		{
-			if (spectrum[i] < maxV || spectrum[i] < 0.0f)
-				continue;
-			maxV = spectrum[i];
-			maxN = i;
-		}
+            //Update visualizers
+            foreach (IVisualizerModule visualizer in _activeVisualizers)
+                visualizer.UpdateVisuals();
+        }
 
-		float freqN = maxN;
-		var dL = spectrum[(maxN - 1 + SAMPLE_SIZE) % SAMPLE_SIZE] / spectrum[maxN];
-		var dR = spectrum[(maxN + 1) % SAMPLE_SIZE] / spectrum[maxN];
-		freqN += 0.5f * (dR * dR - dL * dL);
-		pitchValue = freqN * (sampleRate / 2) / SAMPLE_SIZE;
-	}
+        // Handles adding new visualizers to the scene
+        public void AddVisualizer(IVisualizerModule visualizer)
+        {
+            // Create an empty to group the visualizer's particles
+            GameObject empty = new GameObject(visualizer.Name);
+            Transform parent = visualizer.Scale ? _scaledEmpty.transform : transform;
+            empty.transform.SetParent(parent, false);
 
-	// Handles adding new visualizers to the scene
-	public void AddVisualizer(IVisualizerModule visualizer)
-	{
-		// Create an empty to group the visualizer's particles
-		GameObject empty = new GameObject(visualizer.Name);
-		Transform parent = visualizer.Scale ? _scaledEmpty.transform : transform;
-		empty.transform.SetParent(parent, false);
-		
-		// Create the visualizer
-		visualizer.Spawn(empty.transform);
-		
-		// Register the visualizer
-		_activeVisualizers.Add(visualizer);
-	}
+            // Create the visualizer
+            visualizer.Spawn(empty.transform);
 
-	// Handles removing visualizers from the scene
-	public void RemoveVisualizer(IVisualizerModule visualizer)
-	{
-		// Delete the visualizer object (and all attached particles)
-		Destroy(transform.Find((visualizer.Scale ? "ScaledEmpty/" : "") + visualizer.Name).gameObject);
-		
-		// Unregister the visualizer so it no long receives updates
-		_activeVisualizers.RemoveAll(x => x.GetType() == visualizer.GetType());
-	}
+            // Register the visualizer
+            _activeVisualizers.Add(visualizer);
+        }
 
-	// Fits scaled visualizers into the Monado
-	private void ScaleToMonado()
-	{
-		_scaledEmpty.transform.position = new Vector3(-0.07f, -2.345f, 0);
-		_scaledEmpty.transform.localScale = Vector3.one * 0.055f;
-	}
+        // Handles removing visualizers from the scene
+        public void RemoveVisualizer(IVisualizerModule visualizer)
+        {
+            // Delete the visualizer object (and all attached particles)
+            Destroy(transform.Find((visualizer.Scale ? "ScaledEmpty/" : "") + visualizer.Name).gameObject);
 
-	public void OnScaleValueChanged(float value) {
-		scale = value;
-	}
+            // Unregister the visualizer so it no long receives updates
+            _activeVisualizers.RemoveAll(x => x.GetType() == visualizer.GetType());
+        }
 
-	public void OnModifyScaleValueChanged(bool value) {
-		ModifyScale = value;
-	}
+        // Fits scaled visualizers into the Monado
+        private static void ScaleToMonado()
+        {
+            _scaledEmpty.transform.position = new Vector3(-0.07f, -2.345f, 0);
+            _scaledEmpty.transform.localScale = Vector3.one * 0.055f;
+        }
+
+        public void SetScale(float value)
+        {
+            _scale = value;
+        }
+
+        public void SetModifyScale(bool value)
+        {
+            _modifyScale = value;
+        }
+
+        // Get a sample
+        public static float Sample(int n, FilterType t = FilterType.Bypass)
+        {
+            float k = (_modifyScale ? Mathf.Exp(_scale) : 1);
+            switch (t)
+            {
+                case FilterType.Bypass:
+                    if (_bypassSamples.Length <= n)
+                        return 0;
+                    return _bypassSamples[n] * k;
+                case FilterType.HighPass:
+                    if (_highpassSamples.Length <= n)
+                        return 0;
+                    return _highpassSamples[n] * k;
+                case FilterType.BandPass:
+                    if (_bandpassSamples.Length <= n)
+                        return 0;
+                    return _bandpassSamples[n] * k;
+                case FilterType.LowPass:
+                    if (_lowpassSamples.Length <= n)
+                        return 0;
+                    return _lowpassSamples[n] * k;
+                default:
+                    return 0;
+            }
+        }
+
+        // Get an array of samples. PREFER TO GET INDIVIDUALLY!
+        public static float[] Samples(FilterType t)
+        {
+            float[] output = new float[SampleSize];
+            for (int i = 0; i < SampleSize; i++)
+                output[i] = Sample(i, t);
+            return output;
+        }
+
+        // Get a spectrum value
+        public static float Spectrum(int n)
+        {
+            if (n >= _spectrum.Length)
+                return 0;
+            float k = (_modifyScale ? Mathf.Exp(_scale) : 1);
+            return _spectrum[n] * k;
+        }
+
+        // Get a spectrum range
+        public static float[] Spectrum(int a, int b)
+        {
+            if (a > b || b >= _spectrum.Length)
+                return null;
+            float[] output = new float[b-a+1];
+            for (int i = 0; i <= b - a; i++)
+                output[i] = Spectrum(i);
+            return output;
+        }
+
+        // Get the total audio level of the current filter
+        public static float Level(FilterType t = FilterType.Bypass)
+        {
+            switch (t)
+            {
+                case FilterType.Bypass:
+                    return _bypassTracker.currentGain;
+                case FilterType.HighPass:
+                    return _highpassTracker.currentGain;
+                case FilterType.BandPass:
+                    return _bandpassTracker.currentGain;
+                case FilterType.LowPass:
+                    return _lowpassTracker.currentGain;
+                default:
+                    return 0;
+            }
+        }
+
+        public static void SelectDevice(string id, GameObject go = null)
+        {
+            if (go == null)
+                go = _bypassTracker.gameObject;
+            Destroy(_bypassTracker);
+            _bypassTracker = go.AddComponent<AudioLevelTracker>();
+            _bypassTracker.deviceID = id;
+            _bypassTracker.filterType = FilterType.Bypass;
+            _bypassTracker.autoGain = false;
+            Destroy(_highpassTracker);
+            _highpassTracker = go.AddComponent<AudioLevelTracker>();
+            _highpassTracker.deviceID = id;
+            _highpassTracker.filterType = FilterType.HighPass;
+            _highpassTracker.autoGain = false;
+            Destroy(_bandpassTracker);
+            _bandpassTracker = go.AddComponent<AudioLevelTracker>();
+            _bandpassTracker.deviceID = id;
+            _bandpassTracker.filterType = FilterType.BandPass;
+            _bandpassTracker.autoGain = false;
+            Destroy(_lowpassTracker);
+            _lowpassTracker = go.AddComponent<AudioLevelTracker>();
+            _lowpassTracker.deviceID = id;
+            _lowpassTracker.filterType = FilterType.LowPass;
+            _lowpassTracker.autoGain = false;
+            
+            Destroy(_spectrumAnalyzer);
+            _spectrumAnalyzer = go.AddComponent<SpectrumAnalyzer>();
+            _spectrumAnalyzer.deviceID = id;
+            _spectrumAnalyzer.resolution = SampleSize;
+            _spectrumAnalyzer.autoGain = false;
+        }
+    }
 }
