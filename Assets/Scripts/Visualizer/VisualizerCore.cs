@@ -115,57 +115,57 @@ namespace Visualizer
         }
 
         // Get a sample
-        public static float Sample(int n, FilterType t = FilterType.Bypass)
+        public static float Sample(int index, FilterType filter = FilterType.Bypass)
         {
-            float k = (_modifyScale ? Mathf.Exp(_scale) : 1);
-            switch (t)
+            float multiplier = (_modifyScale ? Mathf.Exp(_scale) : 1);
+            switch (filter)
             {
                 case FilterType.Bypass:
-                    if (_bypassSamples.Length <= n)
+                    if (index >= _bypassSamples.Length)
                         return 0;
-                    return _bypassSamples[n] * k;
+                    return _bypassSamples[index] * multiplier;
                 case FilterType.HighPass:
-                    if (_highpassSamples.Length <= n)
+                    if (index >= _highpassSamples.Length)
                         return 0;
-                    return _highpassSamples[n] * k;
+                    return _highpassSamples[index] * multiplier;
                 case FilterType.BandPass:
-                    if (_bandpassSamples.Length <= n)
+                    if (index >= _bandpassSamples.Length)
                         return 0;
-                    return _bandpassSamples[n] * k;
+                    return _bandpassSamples[index] * multiplier;
                 case FilterType.LowPass:
-                    if (_lowpassSamples.Length <= n)
+                    if (index >= _lowpassSamples.Length)
                         return 0;
-                    return _lowpassSamples[n] * k;
+                    return _lowpassSamples[index] * multiplier;
                 default:
                     return 0;
             }
         }
 
         // Get an array of samples. PREFER TO GET INDIVIDUALLY!
-        public static float[] Samples(FilterType t)
+        public static float[] Samples(FilterType filter)
         {
             float[] output = new float[SampleSize];
             for (int i = 0; i < SampleSize; i++)
-                output[i] = Sample(i, t);
+                output[i] = Sample(i, filter);
             return output;
         }
 
         // Get a spectrum value
-        public static float Spectrum(int n)
+        public static float Spectrum(int index)
         {
-            if (n >= _spectrum.Length)
+            if (index >= _spectrum.Length)
                 return 0;
-            float k = (_modifyScale ? Mathf.Exp(_scale) : 1);
-            return _spectrum[n] * k;
+            float multiplier = (_modifyScale ? Mathf.Exp(_scale) : 1);
+            return _spectrum[index] * multiplier;
         }
 
-        // Get a spectrum range
-        public static float[] Spectrum(int a, int b)
+        // Get a spectrum range, including startIndex and not including endIndex
+        public static float[] Spectrum(int startIndex, int endIndex)
         {
-            if (a > b || b >= _spectrum.Length)
+            if (startIndex >= endIndex || endIndex >= _spectrum.Length)
                 return null;
-            float[] output = new float[b-a+1];
-            for (int i = 0; i <= b - a; i++)
+            float[] output = new float[endIndex - startIndex];
+            for (int i = 0; i < endIndex - startIndex; i++)
                 output[i] = Spectrum(i);
             return output;
         }
