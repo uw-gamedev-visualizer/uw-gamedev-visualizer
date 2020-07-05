@@ -463,7 +463,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 65
+  m_StaticEditorFlags: 64
   m_IsActive: 1
 --- !u!328 &132207666
 VideoPlayer:
@@ -4110,7 +4110,7 @@ Behaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1967748101}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &1967748104
 Camera:
   m_ObjectHideFlags: 0
@@ -4249,7 +4249,7 @@ MonoBehaviour:
   antialiasing: 0
   SMAAQuality: 2
   dithering: 0
-  stopNaNs: 0
+  stopNaNs: 1
   taaSharpenStrength: 0.6
   physicalParameters:
     m_Iso: 200

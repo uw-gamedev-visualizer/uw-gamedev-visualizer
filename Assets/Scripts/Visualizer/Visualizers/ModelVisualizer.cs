@@ -7,13 +7,16 @@ namespace Visualizer.Visualizers
     {
         private static readonly int AnimationTime = Animator.StringToHash("Time");
 
-        private Animator _anim;
+        public GameObject ModelPrefab;
+        
+        private Animator _animator;
+        private Light _light;
         private float _lastSpeed;
         private float _maxSum;
         private float _totalTime;
-        public GameObject ModelPrefab;
 
-        public float Speed = 0.001f;
+        public float Speed = 20;
+        public float Brightness = 5;
 
         public string Name => "3D Model";
 
@@ -22,8 +25,10 @@ namespace Visualizer.Visualizers
         public void Spawn(Transform transform)
         {
             ModelPrefab = Resources.Load("Prefabs/Mimic") as GameObject;
-            GameObject mimic = Object.Instantiate(ModelPrefab, transform, true);
-            _anim = mimic.GetComponent<Animator>();
+            GameObject go = Object.Instantiate(ModelPrefab, transform, true);
+            Mimic mimic = go.GetComponent<Mimic>();
+            _animator = mimic.Animator;
+            _light = mimic.InsideLight;
             //_anim.SetBool("Open", true);
         }
 
@@ -34,12 +39,14 @@ namespace Visualizer.Visualizers
             if (sum > _maxSum)
                 _maxSum = sum;
 
-            float audioSpeed = Speed * Time.deltaTime * (sum * sum + 0.01f);
+            float audioSpeed = Speed * Time.deltaTime * (sum + 0.01f);
             _totalTime += audioSpeed;
             _totalTime %= 2;
 
-            _anim.SetFloat(AnimationTime, Mathf.PingPong(_totalTime, 1));
+            _animator.SetFloat(AnimationTime, Mathf.PingPong(_totalTime, 1));
             //_anim.SetFloat("Time", 1f - sum / _maxSum);
+
+            _light.intensity = Mathf.Max(sum * Brightness, _light.intensity * 0.95f);
         }
     }
 }

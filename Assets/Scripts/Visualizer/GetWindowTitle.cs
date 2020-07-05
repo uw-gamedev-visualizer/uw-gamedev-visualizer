@@ -24,7 +24,8 @@ namespace Visualizer
                 StartInfo =
                 {
                     CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true,
-                    FileName = Application.streamingAssetsPath + "/FindYT.exe"
+                    FileName = Application.streamingAssetsPath + "/FindYT.exe",
+                    StandardOutputEncoding = System.Text.Encoding.UTF8
                 }
             };
 

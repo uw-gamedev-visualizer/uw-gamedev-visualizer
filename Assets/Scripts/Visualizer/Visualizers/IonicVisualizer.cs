@@ -13,12 +13,14 @@ namespace Visualizer.Visualizers
         private const int
             SampleBarCount = 220; // TextureY / (SampleBarWidth + SampleBarSeparation) is full ring, don't go over
 
+        private const float SampleMultiplier = 0.3f;
         private const int SampleBarDistance = 150; // How far the rings are from the center
         private const int SampleBarWidth = 3;
         private const int SampleBarSeparation = 1;
         private const int SampleBarMinHeight = 2;
         private const int SampleBarMaxHeight = 32;
-        private const int JumpPower = 20; // Scaling factor for rings jumping
+        private const float JumpPower = 0.1f; // Scaling factor for rings jumping
+        private const float FallRate = 0.1f;
         private const float RingMinScale = 0.4f;
         private const float RingMaxScale = 1.4f;
         private const float MinRotSpeed = 5; // Scalar
@@ -27,7 +29,7 @@ namespace Visualizer.Visualizers
         private readonly Shader _shader; // We only want to grab this once
 
         private readonly Texture2D _texture; // Represents the bars
-        private readonly Vector3 SubPos = new Vector3(2, 0, 0); // Start position of _subParent
+        private readonly Vector3 SubPos = new Vector3(1, 0, 0); // Start position of _subParent
         private readonly Vector3 SubRot = new Vector3(20, -30, 0); // Start rotation of _subParent
         private List<GameObject> _disks; // Used for updating
 
@@ -104,7 +106,7 @@ namespace Visualizer.Visualizers
                 float prevBPow = bPow;
                 bPow *= b;
                 for (int j = (int) prevBPow; j < bPow - 1; j++)
-                    scaledSpectrum[i] += VisualizerCore.Spectrum(j);
+                    scaledSpectrum[i] += Mathf.Abs(VisualizerCore.Spectrum(j));
             }
 
             // Update texture
@@ -112,8 +114,8 @@ namespace Visualizer.Visualizers
             for (int i = 0; i < SampleBarCount; i++)
             {
                 // Height between 2 and 32
-                int height = (int) Mathf.Abs(Mathf.Ceil(VisualizerCore.Sample(i) * (SampleBarMaxHeight - SampleBarMinHeight))) +
-                             SampleBarMinHeight;
+                float heightFrac = Mathf.Clamp01(Mathf.Abs(VisualizerCore.Sample(i))) * SampleMultiplier;
+                int height = (int) Mathf.Ceil(Mathf.Lerp(SampleBarMinHeight, SampleBarMaxHeight, heightFrac));
                 // Draw the rect on the texture buffer
                 _texture.SetPixels(
                     SampleBarDistance - height,
@@ -128,13 +130,14 @@ namespace Visualizer.Visualizers
             _texture.Apply(false);
 
             // Rotate and jump
-            float fallFactor = 1 - 1f / (VisualizerCore.Level() + 1);
             for (int i = 0; i < NumberOfChunks; i++)
             {
                 _disks[i].transform.Rotate(Vector3.up * RotationAmount(i));
-                float height = Mathf.Max(
-                    -_disks[i].transform.localPosition.z * fallFactor,
-                    scaledSpectrum[i] * JumpPower
+                float target = scaledSpectrum[i] * JumpPower;
+                float height = Mathf.Clamp(
+                    Mathf.Lerp(-_disks[i].transform.localPosition.z, target, FallRate),
+                    target,
+                    20
                 );
                 _disks[i].transform.localPosition = Vector3.back * height;
             }
