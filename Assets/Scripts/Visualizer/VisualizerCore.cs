@@ -155,8 +155,8 @@ namespace Visualizer
         {
             if (index >= _spectrum.Length)
                 return 0;
-            float multiplier = (_modifyScale ? Mathf.Exp(_scale) : 1);
-            return _spectrum[index] * multiplier;
+            //float multiplier = (_modifyScale ? Mathf.Exp(_scale) : 1);
+            return (_spectrum[index] > 0 ? _spectrum[index] : 0);
         }
 
         // Get a spectrum range, including startIndex and not including endIndex
@@ -173,51 +173,60 @@ namespace Visualizer
         // Get the total audio level of the current filter
         public static float Level(FilterType t = FilterType.Bypass)
         {
+            NativeSlice<float> samples;
             switch (t)
             {
                 case FilterType.Bypass:
-                    return _bypassTracker.currentGain;
+                    samples = _bypassSamples;
+                    break;
                 case FilterType.HighPass:
-                    return _highpassTracker.currentGain;
+                    samples = _highpassSamples;
+                    break;
                 case FilterType.BandPass:
-                    return _bandpassTracker.currentGain;
+                    samples = _bandpassSamples;
+                    break;
                 case FilterType.LowPass:
-                    return _lowpassTracker.currentGain;
+                    samples = _lowpassSamples;
+                    break;
                 default:
-                    return 0;
+                    samples = _bypassSamples;
+                    break;
             }
+
+            float multiplier = (_modifyScale ? Mathf.Exp(_scale) : 1);
+            return samples.Sum(Mathf.Abs) / SampleSize * multiplier;
         }
 
-        public static void SelectDevice(string id, GameObject go = null)
+        public static void SelectDevice(string deviceId, GameObject go = null)
         {
             if (go == null)
                 go = _bypassTracker.gameObject;
             Destroy(_bypassTracker);
-            _bypassTracker = go.AddComponent<AudioLevelTracker>();
-            _bypassTracker.deviceID = id;
+            _bypassTracker = MakeTracker(deviceId, go);
             _bypassTracker.filterType = FilterType.Bypass;
-            _bypassTracker.autoGain = false;
             Destroy(_highpassTracker);
-            _highpassTracker = go.AddComponent<AudioLevelTracker>();
-            _highpassTracker.deviceID = id;
+            _highpassTracker = MakeTracker(deviceId, go);
             _highpassTracker.filterType = FilterType.HighPass;
-            _highpassTracker.autoGain = false;
             Destroy(_bandpassTracker);
-            _bandpassTracker = go.AddComponent<AudioLevelTracker>();
-            _bandpassTracker.deviceID = id;
+            _bandpassTracker = MakeTracker(deviceId, go);
             _bandpassTracker.filterType = FilterType.BandPass;
-            _bandpassTracker.autoGain = false;
             Destroy(_lowpassTracker);
-            _lowpassTracker = go.AddComponent<AudioLevelTracker>();
-            _lowpassTracker.deviceID = id;
+            _lowpassTracker = MakeTracker(deviceId, go);
             _lowpassTracker.filterType = FilterType.LowPass;
-            _lowpassTracker.autoGain = false;
             
             Destroy(_spectrumAnalyzer);
             _spectrumAnalyzer = go.AddComponent<SpectrumAnalyzer>();
-            _spectrumAnalyzer.deviceID = id;
+            _spectrumAnalyzer.deviceID = deviceId;
             _spectrumAnalyzer.resolution = SampleSize;
-            _spectrumAnalyzer.autoGain = false;
+            _spectrumAnalyzer.dynamicRange = 50;
+        }
+
+        private static AudioLevelTracker MakeTracker(string deviceId, GameObject go)
+        {
+            AudioLevelTracker tracker = go.AddComponent<AudioLevelTracker>();
+            tracker.deviceID = deviceId;
+            tracker.smoothFall = false;
+            return tracker;
         }
     }
 }

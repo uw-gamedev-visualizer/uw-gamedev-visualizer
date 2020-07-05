@@ -9,11 +9,11 @@ namespace Visualizer
             new SoundVisual(),
             new WindVisualizer(),
             new ModelVisualizer(),
-            new JoseVisualizer(),
+            //new JoseVisualizer(),
             new IonicVisualizer(),
             new GridVisualizer(),
             new VFXVisualizer(),
-            new SpookyVisualizer(),
+            //new SpookyVisualizer(),
             new FireVisualizer()
         };
     }

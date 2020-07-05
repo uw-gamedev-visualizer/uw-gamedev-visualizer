@@ -11,11 +11,11 @@ namespace Visualizer.Visualizers
         private Transform _parentTransform; // For keeping the particles organized in the editor
         private HashSet<GameObject> _particles; // For keeping the particles organized in the code
         private float _spawnCooldown; // Number of spawns to do in the next frame
-        public float AudioStrength = 0.1f; // Impact of the audio on wind, 0 to 1
+        public float AudioStrength = 0.1f; // How quickly wind responds to audio level, 0 to 1
         public float CountPerSec = 10; // Approx. speed of particle spawn
         public float KillX = -10; // The size of the particle field, also influences spawn location.
 
-        public float Size = 0.3f; // Size of particles
+        public float Size = 0.2f; // Size of particles
         public float Speed = 100; // Speed of the wind
 
         public string Name => "Wind";
@@ -38,8 +38,8 @@ namespace Visualizer.Visualizers
         public void UpdateVisuals()
         {
             // Set up speeds
-            float sum = VisualizerCore.Level();
-            float audioSpeed = Speed * Time.deltaTime * (sum * sum + 0.1f) * Mathf.Sign(KillX);
+            float sum = Mathf.Clamp(VisualizerCore.Level(), 0, 0.2f);
+            float audioSpeed = Speed * Time.deltaTime * (sum + 0.01f) * Mathf.Sign(KillX);
             float thisSpeed = Mathf.Lerp(_lastSpeed, audioSpeed, AudioStrength);
             _lastSpeed = thisSpeed;
 
@@ -60,7 +60,7 @@ namespace Visualizer.Visualizers
                 particle.transform.position = position;
 
                 // Apply scale
-                particle.transform.localScale = Vector3.one * thisSpeed;
+                //particle.transform.localScale = new Vector3(Size, Size, 1);
 
                 // Kill if too far
                 if (Mathf.Abs(particle.transform.position.x) > Mathf.Abs(KillX))
@@ -76,15 +76,12 @@ namespace Visualizer.Visualizers
         {
             if (Random.value < 0.5f) return;
 
-            GameObject g = Object.Instantiate(_dustPrefab);
-
-            // Keep a clean workspace
+            GameObject g = Object.Instantiate(_dustPrefab, _parentTransform, true);
             _particles.Add(g);
-            g.transform.parent = _parentTransform;
 
             // Set particle size and location
             g.transform.position = new Vector3(x, Random.Range(-3.5f, 5f), -2);
-            g.transform.localScale = new Vector3(Size, Size);
+            g.transform.localScale = new Vector3(Size, Size, 1);
 
             // Give particle a random rotation
             Rotator r = g.AddComponent<Rotator>();

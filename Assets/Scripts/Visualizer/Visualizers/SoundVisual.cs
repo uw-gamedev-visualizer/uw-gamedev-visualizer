@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -19,11 +20,11 @@ namespace Visualizer.Visualizers
 
         // Clamp the bars from stretching way too far so they look
         // somewhat comparative.
-        public float maxVisualScale = 5;
+        public float maxVisualScale = 15;
         private float[] scales; // Store the scales (y) of the bars.
 
         // Multplier by which to scale all the bars
-        public float sizeModifier = 175;
+        public float sizeModifier = 25;
 
         // How quickly the bars descend from a spike
         public float smoothSpeed = 10;
@@ -72,11 +73,12 @@ namespace Visualizer.Visualizers
                     spectrumIndex++;
                 }
 
-                float scaleY = sum / averageSize * sizeModifier;
-                scales[visualIndex] = Mathf.Max(scales[visualIndex] - smoothSpeed * Time.deltaTime, 0);
-                scales[visualIndex] = Mathf.Clamp(scales[visualIndex], scaleY, maxVisualScale);
+                float audioScale = sum / averageSize * sizeModifier;
+                float fallScale = scales[visualIndex] - smoothSpeed * Time.deltaTime;
+                float finalScale = Mathf.Clamp(fallScale, audioScale, maxVisualScale);
+                scales[visualIndex] = finalScale;
 
-                visuals[visualIndex].localScale = Vector3.one + Vector3.right * scales[visualIndex];
+                visuals[visualIndex].localScale = new Vector3(1 + finalScale, 1, 1);
             }
         }
     }
