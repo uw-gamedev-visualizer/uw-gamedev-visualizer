@@ -6,7 +6,7 @@ namespace Visualizer
     {
         public static readonly IVisualizerModule[] List =
         {
-            new SoundVisual(),
+            new MonadoBarVisualizer(),
             new WindVisualizer(),
             new ModelVisualizer(),
             //new JoseVisualizer(),

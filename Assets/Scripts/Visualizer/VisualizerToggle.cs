@@ -10,12 +10,12 @@ namespace Visualizer
         private Toggle _toggle; // The component attached
         private IVisualizerModule _visualizer; // Which visualizer this toggle is attached to
 
-        private VisualizerCore _visualizerCore; // Used to tell the parent which visualizers to use
+        private VisualizersManager _visualizersManager; // Used to tell the parent which visualizers to use
 
         // Can't use Start since we need to set the variables first
-        public void Init(VisualizerCore visualizerCore, IVisualizerModule visualizerModule)
+        public void Init(VisualizersManager visualizersManager, IVisualizerModule visualizerModule)
         {
-            _visualizerCore = visualizerCore;
+            _visualizersManager = visualizersManager;
             _visualizer = visualizerModule;
 
             _toggle = GetComponent<Toggle>();
@@ -33,12 +33,12 @@ namespace Visualizer
         {
             if (value)
             {
-                _visualizerCore.AddVisualizer(_visualizer);
+                _visualizersManager.AddVisualizer(_visualizer);
                 _image.color = new Color(_image.color.r, _image.color.g, _image.color.b, 0.9f);
             }
             else
             {
-                _visualizerCore.RemoveVisualizer(_visualizer);
+                _visualizersManager.RemoveVisualizer(_visualizer);
                 _image.color = new Color(_image.color.r, _image.color.g, _image.color.b, 0);
             }
         }
