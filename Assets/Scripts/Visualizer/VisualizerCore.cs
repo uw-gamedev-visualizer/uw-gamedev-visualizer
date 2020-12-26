@@ -10,8 +10,8 @@ namespace Visualizer
     public static class VisualizerCore
     {
     
-        // How many samples to split the sound data into.
-        public const int SampleSize = 2048;
+        // Length of the spectrum array
+        public const int SpectrumSize = 2048;
     
         public static float Scale = 0;
         public static bool ModifyScale = false;
@@ -34,19 +34,14 @@ namespace Visualizer
         
         private static AudioLevelTracker GetTracker(FilterType filter)
         {
-            switch (filter)
+            return filter switch
             {
-                case FilterType.Bypass:
-                    return _bypassTracker;
-                case FilterType.HighPass:
-                    return _highpassTracker;
-                case FilterType.BandPass:
-                    return _bandpassTracker;
-                case FilterType.LowPass:
-                    return _lowpassTracker;
-                default:
-                    throw new ArgumentException("Tried to get invalid tracker type");
-            }
+                FilterType.Bypass => _bypassTracker,
+                FilterType.HighPass => _highpassTracker,
+                FilterType.BandPass => _bandpassTracker,
+                FilterType.LowPass => _lowpassTracker,
+                _ => throw new ArgumentException("Tried to get invalid tracker type")
+            };
         }
 
         // Get a sample
@@ -55,7 +50,12 @@ namespace Visualizer
             NativeSlice<float> samples = GetTracker(filter).audioDataSlice;
 
             float multiplier = (ModifyScale ? Mathf.Exp(Scale) : 1);
-            return samples[index] * multiplier;
+            float f = samples[index];
+            if (float.IsNaN(f))
+            {
+                f = 0;
+            }
+            return Mathf.Clamp01(f * multiplier);
         }
 
         // Get an array of samples
@@ -67,7 +67,12 @@ namespace Visualizer
             float[] output = new float[samples.Length];
             for (int i = 0; i < samples.Length; i++)
             {
-                output[i] = samples[i] * multiplier;
+                float f = samples[i];
+                if (float.IsNaN(f))
+                {
+                    f = 0;
+                }
+                output[i] = Mathf.Clamp01(f * multiplier);
             }
 
             return output;
@@ -79,13 +84,18 @@ namespace Visualizer
             NativeSlice<float> spectrum = _spectrumAnalyzer.spectrumArray;
             
             float multiplier = (ModifyScale ? Mathf.Exp(Scale) : 1);
-            return Mathf.Clamp01(Mathf.Abs(spectrum[index]) * multiplier);
+            float f = spectrum[index];
+            if (float.IsNaN(f))
+            {
+                f = 0;
+            }
+            return Mathf.Clamp01(f * multiplier);
         }
 
         // Get a spectrum range, including startIndex and not including endIndex
         public static float[] Spectrum(int startIndex, int endIndex)
         {
-            if (startIndex >= endIndex)
+            if (startIndex >= endIndex || startIndex < 0 || endIndex > SpectrumSize)
             {
                 throw new ArgumentException("Invalid range");
             }
@@ -96,19 +106,20 @@ namespace Visualizer
             float[] output = new float[endIndex - startIndex];
             for (int i = 0; i < endIndex - startIndex; i++)
             {
-                if (i >= spectrum.Length)
+                float f = spectrum[i + startIndex];
+                if (float.IsNaN(f))
                 {
-                    break;
+                    f = 0;
                 }
-                output[i] = Mathf.Clamp01(Mathf.Abs(spectrum[i]) * multiplier);
+                output[i] = Mathf.Clamp01(f * multiplier);
             }
-
+            
             return output;
         }
 
         public static float[] Spectrum()
         {
-            return Spectrum(0, SampleSize);
+            return Spectrum(0, SpectrumSize);
         }
 
         // Get the total audio level of the current filter
@@ -121,7 +132,7 @@ namespace Visualizer
             }
 
             float multiplier = (ModifyScale ? Mathf.Exp(Scale) : 1);
-            return samples.Max(Mathf.Abs) * multiplier;
+            return samples.Where(x => !float.IsNaN(x)).Max(Mathf.Abs) * multiplier;
         }
 
         // When changing devices we need to make new trackers
@@ -139,12 +150,8 @@ namespace Visualizer
             Object.Destroy(_spectrumAnalyzer);
             _spectrumAnalyzer = _trackerGameObject.AddComponent<SpectrumAnalyzer>();
             _spectrumAnalyzer.deviceID = deviceId;
-            _spectrumAnalyzer.resolution = SampleSize;
+            _spectrumAnalyzer.resolution = SpectrumSize;
             _spectrumAnalyzer.dynamicRange = 50;
-            
-            // Fixes a bug where spectrumArray may be filled with unexpected values
-            // Theory: SpectrumAnalyzer doesn't calloc and inits lazily. The first poll gets garbage, but later polls are good.
-            float f = _spectrumAnalyzer.spectrumArray[0];
         }
         
         // Makes and configures a new tracker

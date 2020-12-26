@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 520821684c7a2174e9185e6fa77c22e5, type: 3}
+  m_Name: JoseVisualizer
+  m_EditorClassIdentifier: 
+  JosePrefab: {fileID: 1237942712990564, guid: 967d7c0aa2cf570429e1ab53f2617f04, type: 3}

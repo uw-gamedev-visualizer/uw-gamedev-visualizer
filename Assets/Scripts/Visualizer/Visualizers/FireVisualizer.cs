@@ -4,7 +4,8 @@ using UnityEngine.VFX;
 
 namespace Visualizer.Visualizers
 {
-    public class FireVisualizer : IVisualizerModule
+    [CreateAssetMenu(menuName = "Visualizers/FireVisualizer")]
+    public class FireVisualizer : VisualizerModule
     {
         private const int FLAMES = 128;
         private const int BITS = 7;
@@ -13,10 +14,10 @@ namespace Visualizer.Visualizers
         private VisualEffect[] _flames;
         private float[] _powers;
         
-        public string Name => "Fire";
-        public bool Scale => false;
+        public override string Name => "Fire";
+        public override bool Scale => false;
         
-        public void Spawn(Transform transform)
+        public override void Spawn(Transform transform)
         {
             _fireVfx = Resources.Load("Prefabs/Fire") as GameObject;
             
@@ -33,13 +34,13 @@ namespace Visualizer.Visualizers
             }
         }
 
-        public void UpdateVisuals()
+        public override void UpdateVisuals()
         {
             float sumSpectrum = VisualizerCore.Level();
             
             // Build a logarithmic spectrum
             float[] scaledSpectrum = new float[FLAMES];
-            float b = Mathf.Pow(VisualizerCore.SampleSize, 1f / FLAMES);
+            float b = Mathf.Pow(VisualizerCore.SpectrumSize, 1f / FLAMES);
             float bPow = 1;
             for (int i = 0; i < FLAMES; i++)
             {

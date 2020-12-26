@@ -2,9 +2,10 @@
 
 namespace Visualizer.Visualizers
 {
-    public class GridVisualizer : IVisualizerModule
+    [CreateAssetMenu(menuName = "Visualizers/GridVisualizer")]
+    public class GridVisualizer : VisualizerModule
     {
-        private GameObject _circlePrefab;
+        public GameObject CirclePrefab;
         private GradientAlphaKey[] alphaKey;
         public Vector2Int amountOfVisuals = new Vector2Int(12, 8); // How many circles to use.
         private GradientColorKey[] colorKey;
@@ -32,15 +33,12 @@ namespace Visualizer.Visualizers
 
         private Transform[] visuals; // Store the transforms of the bars.
 
-        public string Name => "Grid";
-
-        public bool Scale => false;
+        public override string Name => "Grid";
+        public override bool Scale => false;
 
         // Use this for initialization
-        public void Spawn(Transform transform)
+        public override void Spawn(Transform transform)
         {
-            _circlePrefab = (GameObject) Resources.Load("Prefabs/_Circle");
-
             visuals = new Transform[amountOfVisuals.x * amountOfVisuals.y];
             scales = new float[amountOfVisuals.x * amountOfVisuals.y];
             colors = new SpriteRenderer[amountOfVisuals.x * amountOfVisuals.y];
@@ -55,7 +53,7 @@ namespace Visualizer.Visualizers
                     Vector3 spawnPos =
                         cam.ViewportToWorldPoint(new Vector3(xSpace / 2f + xSpace * i, ySpace / 2f + ySpace * j));
     
-                    GameObject g = Object.Instantiate(_circlePrefab, new Vector3(spawnPos.x, spawnPos.y, 1), Quaternion.identity);
+                    GameObject g = Object.Instantiate(CirclePrefab, new Vector3(spawnPos.x, spawnPos.y, 1), Quaternion.identity);
                     g.transform.SetParent(transform, false);
                     visuals[sum] = g.transform;
                     colors[sum] = g.GetComponent<SpriteRenderer>();
@@ -66,11 +64,11 @@ namespace Visualizer.Visualizers
         }
 
         // Set scale of bars based on the values from analysis.
-        public void UpdateVisuals()
+        public override void UpdateVisuals()
         {
             int spectrumIndex = 0;
             int averageSize =
-                (int) (VisualizerCore.SampleSize * keepPercentage / (amountOfVisuals.x * amountOfVisuals.y));
+                (int) (VisualizerCore.SpectrumSize * keepPercentage / (amountOfVisuals.x * amountOfVisuals.y));
 
             for (int visualIndex = 0; visualIndex < visuals.Length; visualIndex++)
             {

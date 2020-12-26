@@ -4,9 +4,10 @@ using UnityEngine;
 
 namespace Visualizer.Visualizers
 {
-    public class WindVisualizer : IVisualizerModule
+    [CreateAssetMenu(menuName = "Visualizers/WindVisualizer")]
+    public class WindVisualizer : VisualizerModule
     {
-        private GameObject _dustPrefab;
+        public GameObject DustPrefab;
         private float _lastSpeed; // What the wind speed was last frame
         private Transform _parentTransform; // For keeping the particles organized in the editor
         private HashSet<GameObject> _particles; // For keeping the particles organized in the code
@@ -18,14 +19,12 @@ namespace Visualizer.Visualizers
         public float Size = 0.2f; // Size of particles
         public float Speed = 100; // Speed of the wind
 
-        public string Name => "Wind";
-
-        public bool Scale => false;
+        public override string Name => "Wind";
+        public override bool Scale => false;
 
         // Use this for initialization
-        public void Spawn(Transform transform)
+        public override void Spawn(Transform transform)
         {
-            _dustPrefab = Resources.Load("Prefabs/MimicDust") as GameObject;
             _parentTransform = transform;
             _particles = new HashSet<GameObject>();
 
@@ -35,10 +34,10 @@ namespace Visualizer.Visualizers
         }
 
         // Called every frame
-        public void UpdateVisuals()
+        public override void UpdateVisuals()
         {
             // Set up speeds
-            float sum = Mathf.Clamp(VisualizerCore.Level(), 0, 0.2f);
+            float sum = Mathf.Clamp01(VisualizerCore.Level()) * 0.2f;
             float audioSpeed = Speed * Time.deltaTime * (sum + 0.01f) * Mathf.Sign(KillX);
             float thisSpeed = Mathf.Lerp(_lastSpeed, audioSpeed, AudioStrength);
             _lastSpeed = thisSpeed;
@@ -76,7 +75,7 @@ namespace Visualizer.Visualizers
         {
             if (Random.value < 0.5f) return;
 
-            GameObject g = Object.Instantiate(_dustPrefab, _parentTransform, true);
+            GameObject g = Object.Instantiate(DustPrefab, _parentTransform, true);
             _particles.Add(g);
 
             // Set particle size and location

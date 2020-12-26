@@ -2,7 +2,7 @@
 
 namespace Visualizer.Visualizers
 {
-    public class FlareVisualizer : IVisualizerModule
+    public class FlareVisualizer : VisualizerModule
     {
         private float[] _scales; // Store the brightnesses of the flares
 
@@ -15,12 +15,11 @@ namespace Visualizer.Visualizers
         public float SizeModifier = 2.5f; // Multplier by which to scale all the flares
         public float SmoothSpeed = 0.25f; // How quickly the flares descend from a spike
 
-        public string Name => "Flare";
-
-        public bool Scale => true;
+        public override string Name => "Flare";
+        public override bool Scale => true;
 
         // Use this for initialization
-        public void Spawn(Transform transform)
+        public override void Spawn(Transform transform)
         {
             GameObject lensFlarePrefab = Resources.Load("Prefabs/LensFlareObject") as GameObject;
 
@@ -43,11 +42,11 @@ namespace Visualizer.Visualizers
         }
 
         // Set brightnesses of flares based on the values from analysis.
-        public void UpdateVisuals()
+        public override void UpdateVisuals()
         {
             // Build a logarithmic spectrum
             float[] scaledSpectrum = new float[NumberOfFlares];
-            float b = Mathf.Pow(VisualizerCore.SampleSize, 1f / NumberOfFlares);
+            float b = Mathf.Pow(VisualizerCore.SpectrumSize, 1f / NumberOfFlares);
             float bPow = 1;
             for (int i = 0; i < NumberOfFlares; i++)
             {

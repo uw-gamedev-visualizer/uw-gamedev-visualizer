@@ -4,7 +4,8 @@ using Object = UnityEngine.Object;
 
 namespace Visualizer.Visualizers
 {
-    public class JoseVisualizer : IVisualizerModule
+    [CreateAssetMenu(menuName = "Visualizers/JoseVisualizer")]
+    public class JoseVisualizer : VisualizerModule
     {
         public const float BoneLengthSquared = 9;
         public const float LegWidth = 0.25f;
@@ -16,7 +17,7 @@ namespace Visualizer.Visualizers
         private Transform _footLeft;
         private Transform _footRight;
 
-        private GameObject _josePrefab;
+        public GameObject JosePrefab;
         private Transform _kneeLeft;
         private Transform _kneeRight;
 
@@ -31,16 +32,15 @@ namespace Visualizer.Visualizers
         private Vector3 _inactivePeak;
         private float _lastPeak = -2;
 
-        public string Name => "Jose";
-
-        public bool Scale => false;
+        public override string Name => "Jose";
+        public override bool Scale => false;
 
         // Use this for initialization
-        public void Spawn(Transform transform)
+        public override void Spawn(Transform transform)
         {
-            _josePrefab = Resources.Load("Prefabs/JosePrefab") as GameObject;
+            JosePrefab = Resources.Load("Prefabs/JosePrefab") as GameObject;
 
-            GameObject joseObject = Object.Instantiate(_josePrefab, new Vector3(0, 0, -1), Quaternion.Euler(0, 0, 0));
+            GameObject joseObject = Object.Instantiate(JosePrefab, new Vector3(0, 0, -1), Quaternion.Euler(0, 0, 0));
             joseObject.transform.parent = transform;
 
             _body = joseObject.transform.Find("Body");
@@ -65,7 +65,7 @@ namespace Visualizer.Visualizers
             _fkRight = LegSetup(lines);
         }
 
-        public void UpdateVisuals()
+        public override void UpdateVisuals()
         {
             if (Time.unscaledTime - _lastPeak > 0.1f && VisualizerBeatDetector.IsBeat())
             {

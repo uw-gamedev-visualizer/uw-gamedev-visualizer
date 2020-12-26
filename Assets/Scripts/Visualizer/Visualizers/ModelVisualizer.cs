@@ -1,9 +1,9 @@
-using System.Linq;
 using UnityEngine;
 
 namespace Visualizer.Visualizers
 {
-    public class ModelVisualizer : IVisualizerModule
+    [CreateAssetMenu(menuName = "Visualizers/ModelVisualizer")]
+    public class ModelVisualizer : VisualizerModule
     {
         private static readonly int AnimationTime = Animator.StringToHash("Time");
 
@@ -18,13 +18,11 @@ namespace Visualizer.Visualizers
         public float Speed = 20;
         public float Brightness = 5;
 
-        public string Name => "3D Model";
+        public override string Name => "3D Model";
+        public override bool Scale => false;
 
-        public bool Scale => false;
-
-        public void Spawn(Transform transform)
+        public override void Spawn(Transform transform)
         {
-            ModelPrefab = Resources.Load("Prefabs/Mimic") as GameObject;
             GameObject go = Object.Instantiate(ModelPrefab, transform, true);
             Mimic mimic = go.GetComponent<Mimic>();
             _animator = mimic.Animator;
@@ -32,7 +30,7 @@ namespace Visualizer.Visualizers
             //_anim.SetBool("Open", true);
         }
 
-        public void UpdateVisuals()
+        public override void UpdateVisuals()
         {
             // Set up speeds
             float sum = VisualizerCore.Level();

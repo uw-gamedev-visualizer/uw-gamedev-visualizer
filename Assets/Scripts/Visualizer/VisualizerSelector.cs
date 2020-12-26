@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Visualizer
 {
@@ -7,9 +8,9 @@ namespace Visualizer
         public GameObject ScrollView; // Toggle prefabs go in here
         public GameObject TogglePrefab;
 
-        public void Init(VisualizersManager visualizersManager)
+        public void Init(VisualizersManager visualizersManager, IList<VisualizerModule> visualizerList)
         {
-            for (int i = 0; i < VisualizerList.List.Length; i++)
+            for (int i = 0; i < visualizerList.Count; i++)
             {
                 // Make the toggle in the UI
                 GameObject toggle = Instantiate(TogglePrefab, ScrollView.transform);
@@ -17,7 +18,7 @@ namespace Visualizer
 
                 // Set up the toggle's scripts
                 VisualizerToggle script = toggle.GetComponent<VisualizerToggle>();
-                script.Init(visualizersManager, VisualizerList.List[i]);
+                script.Init(visualizersManager, visualizerList[i]);
             }
         }
     }

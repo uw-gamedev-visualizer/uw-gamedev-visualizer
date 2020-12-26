@@ -8,12 +8,12 @@ namespace Visualizer
     {
         private Image _image; // The component attached
         private Toggle _toggle; // The component attached
-        private IVisualizerModule _visualizer; // Which visualizer this toggle is attached to
+        private VisualizerModule _visualizer; // Which visualizer this toggle is attached to
 
         private VisualizersManager _visualizersManager; // Used to tell the parent which visualizers to use
 
         // Can't use Start since we need to set the variables first
-        public void Init(VisualizersManager visualizersManager, IVisualizerModule visualizerModule)
+        public void Init(VisualizersManager visualizersManager, VisualizerModule visualizerModule)
         {
             _visualizersManager = visualizersManager;
             _visualizer = visualizerModule;

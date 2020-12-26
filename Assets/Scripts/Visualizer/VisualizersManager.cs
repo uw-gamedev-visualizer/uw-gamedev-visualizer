@@ -7,15 +7,16 @@ namespace Visualizer
     {
         private GameObject _unscaledEmpty;
         private GameObject _scaledEmpty; // for Monado scaling
-        private Dictionary<IVisualizerModule, GameObject> _activeVisualizers = new Dictionary<IVisualizerModule, GameObject>(); // Visualizers in use, for UpdateVisuals()
+        private Dictionary<VisualizerModule, GameObject> _activeVisualizers = new Dictionary<VisualizerModule, GameObject>(); // Visualizers in use, for UpdateVisuals()
 
         // Used to create the list
+        public VisualizerList VisualizerList;
         public VisualizerSelector VisualizerSelector;
 
         private void Start()
         {
             VisualizerCore.Init(gameObject);
-            VisualizerSelector.Init(this);
+            VisualizerSelector.Init(this, VisualizerList.List);
 
             MakeUnscaledEmpty();
             MakeScaledEmpty();
@@ -25,14 +26,14 @@ namespace Visualizer
         {
             VisualizerBeatDetector.Update();
 
-            foreach (IVisualizerModule visualizer in _activeVisualizers.Keys)
+            foreach (VisualizerModule visualizer in _activeVisualizers.Keys)
             {
                 visualizer.UpdateVisuals();
             }
         }
 
         // Handles adding new visualizers to the scene
-        public void AddVisualizer(IVisualizerModule visualizer)
+        public void AddVisualizer(VisualizerModule visualizer)
         {
             // Create an empty to group the visualizer's particles
             GameObject parent = visualizer.Scale ? _scaledEmpty : _unscaledEmpty;
@@ -44,7 +45,7 @@ namespace Visualizer
         }
 
         // Handles removing visualizers from the scene
-        public void RemoveVisualizer(IVisualizerModule visualizer)
+        public void RemoveVisualizer(VisualizerModule visualizer)
         {
             Destroy(_activeVisualizers[visualizer]);
             _activeVisualizers.Remove(visualizer);
