@@ -1,4 +1,3 @@
-using System.Linq;
 using UnityEngine;
 using UnityEngine.VFX;
 
@@ -28,7 +27,7 @@ namespace Visualizer.Visualizers
             {
                 //float posX = GetX(i+1, BITS);
                 float posX = NormalRandom();
-                GameObject go = Object.Instantiate(_fireVfx, transform.position + new Vector3(5 * posX - 2, -2, 0), Quaternion.identity);
+                GameObject go = Instantiate(_fireVfx, transform.position + new Vector3(5 * posX - 2, -2, 0), Quaternion.identity);
                 go.transform.parent = transform;
                 _flames[i] = go.GetComponent<VisualEffect>();
             }
