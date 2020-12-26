@@ -6,9 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Main.unity
+    path: Assets/Core/Scenes/Main.unity
     guid: 04f8426af2555bb45b2e7da3634fcc37
   - enabled: 0
-    path: Assets/Scenes/NoXenoblade.unity
+    path: Assets/Core/Scenes/NoXenoblade.unity
     guid: 9b99fddf9d9f1d34fa85a92cba170414
   m_configObjects: {}
