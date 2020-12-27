@@ -1,7 +1,7 @@
 # UW Gamedev Visualizer
 
 ## Operation
-If in editor, open and run the scene `Main`.
+If in editor, open and run the scene `Core/Scenes/Main.unity`.
 
 - Clicking the `<` button will pull out the main menu
   - Clicking the `>` button will make the main menu disappear
@@ -60,7 +60,7 @@ Audio synchronizes better
 - Add assets in the folder
 - Create a `ScriptableObject` asset by right clicking in the folder and going to `Create > Visualizers > VisualizerName`
   - Add configuration details
-  - Add the asset to the `VisualizerList` on the object `Main.scene > Visualiser`
+  - Add the asset to the `VisualizerList` on the object `Core/Scenes/Main.unity > Visualiser`
 
 ### Accessing audio information
 `VisualizerCore` is a static class and provides access to all the audio data
