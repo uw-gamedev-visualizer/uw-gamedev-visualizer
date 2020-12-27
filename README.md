@@ -60,6 +60,7 @@ Audio synchronizes better
 - Add assets in the folder
 - Create a `ScriptableObject` asset by right clicking in the folder and going to `Create > Visualizers > VisualizerName`
   - Add configuration details
+  - Add the asset to the `VisualizerList` on the object `Main.scene > Visualiser`
 
 ### Accessing audio information
 `VisualizerCore` is a static class and provides access to all the audio data
