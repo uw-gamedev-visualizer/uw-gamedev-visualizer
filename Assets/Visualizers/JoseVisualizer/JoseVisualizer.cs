@@ -30,7 +30,7 @@ namespace Visualizer.Visualizers
         private Vector3 _center;
         private Vector3 _activePeak;
         private Vector3 _inactivePeak;
-        private float _lastPeak = -2;
+        private float lockoutTime = 0;
 
         public override string Name => "Jose";
         public override bool Scale => false;
@@ -38,15 +38,13 @@ namespace Visualizer.Visualizers
         // Use this for initialization
         public override void Spawn(Transform transform)
         {
-            JosePrefab = Resources.Load("Prefabs/JosePrefab") as GameObject;
-
-            GameObject joseObject = Object.Instantiate(JosePrefab, new Vector3(0, 0, -1), Quaternion.Euler(0, 0, 0));
+            GameObject joseObject = Instantiate(JosePrefab, new Vector3(0, 0, -1), Quaternion.Euler(0, 0, 0));
             joseObject.transform.parent = transform;
 
             _body = joseObject.transform.Find("Body");
-            _center = _body.transform.position;
-            _activePeak = new Vector3(_center.x - 4, _center.y, _center.z);
-            _inactivePeak = new Vector3(_center.x + 4, _center.y, _center.z);
+            _center = _body.transform.position + Vector3.up;
+            _activePeak = new Vector3(_center.x - 4, _center.y - 2, _center.z);
+            _inactivePeak = new Vector3(_center.x + 4, _center.y - 2, _center.z);
 
             _black = _body.GetComponent<MeshRenderer>().material;
 
@@ -67,7 +65,8 @@ namespace Visualizer.Visualizers
 
         public override void UpdateVisuals()
         {
-            if (Time.unscaledTime - _lastPeak > 0.1f && VisualizerBeatDetector.IsBeat())
+            lockoutTime -= Time.deltaTime;
+            if (lockoutTime <= 0 && (VisualizerBeatDetector.SecsToBeat < 0.05f || VisualizerBeatDetector.IsBeat))
             {
                 _body.position = _activePeak;
                 
@@ -75,7 +74,7 @@ namespace Visualizer.Visualizers
                 _activePeak = _inactivePeak;
                 _inactivePeak = temp;
 
-                _lastPeak = Time.unscaledTime;
+                lockoutTime = 0.2f;
             }
             else
             {
