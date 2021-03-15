@@ -133,7 +133,7 @@ namespace Visualizer
             }
 
             float multiplier = (ModifyScale ? Mathf.Exp(Scale) : 1);
-            return samples.Where(x => !float.IsNaN(x)).Max(Mathf.Abs) * multiplier;
+            return GetTracker(filter).normalizedLevel;
         }
 
         // When changing devices we need to make new trackers
